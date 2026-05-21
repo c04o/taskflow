@@ -1,100 +1,41 @@
 package com.example.taskvmg6.ui.viewmodel
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.taskvmg6.ui.model.Priority
 import com.example.taskvmg6.ui.model.Task
 import com.example.taskvmg6.ui.repository.TaskRepository
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class TaskViewModel : ViewModel() {
-    private val taskRepository = TaskRepository()
+class TaskViewModel(private val repository: TaskRepository = TaskRepository()) : ViewModel() {
+    val tasks: StateFlow<List<Task>> = repository.tasks
 
-    var tasks by mutableStateOf(
-        listOf<Task>()
-    )
-        private set
-
-    var id by mutableStateOf(0)
-        private set
-
-    var title by mutableStateOf("")
-        private set
-
-    var description by mutableStateOf("")
-        private set
-
-    var isCompleted by mutableStateOf(false)
-        private set
-
-    fun onIdChange(newId: String) {
-        id = newId.toIntOrNull() ?: 0
-    }
-    fun onTitleChange(newTitle: String) {
-        title = newTitle
-    }
-    fun onDescriptionChange(newDescription: String) {
-        description = newDescription
-    }
-    fun onIsCompletedChange(newIsCompleted: Boolean) {
-        isCompleted = newIsCompleted
-    }
-
-    init {
-        loadTask()
-    }
-
-    private fun loadTask() {
-        tasks = taskRepository.getTasks()
-    }
-    fun loadTask(taskId: Int) {
-        if (taskId == -1) {
-            clearForm()
-            return
-        }
-        val task = taskRepository.getTask(taskId)
-        if (task != null) {
-            id = task.id
-            title = task.title
-            description = task.description
-            isCompleted = task.isCompleted
+    fun addTask(title: String, description: String, priority: Priority) {
+        viewModelScope.launch {
+            repository.addTask(title, description, priority)
         }
     }
 
-    fun addTask() {
-        taskRepository.addTask(
-            Task(
-                id = id,
-                title = title,
-                description = description,
-                isCompleted = isCompleted
-            )
-        )
-        loadTask()
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+        }
     }
 
-    fun updateTask() {
-        taskRepository.updateTask(
-            Task(
-                id = id,
-                title = title,
-                description = description,
-                isCompleted = isCompleted
-            )
-        )
-        loadTask()
-    }
     fun deleteTask(taskId: Int) {
-        taskRepository.deleteTask(taskId)
-        loadTask()
+        viewModelScope.launch {
+            repository.deleteTask(taskId)
+        }
     }
 
-    fun clearForm() {
-        id = 0
-        title = ""
-        description = ""
-        isCompleted = false
+    fun toggleTaskCompletion(taskId: Int) {
+        viewModelScope.launch {
+            repository.toggleTaskCompletion(taskId)
+        }
     }
 
-
+    fun getTaskById(id: Int): Task? {
+        return repository.getTaskById(id)
+    }
 }
